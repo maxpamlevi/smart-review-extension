@@ -1,0 +1,119 @@
+{
+  "name": "srv",
+  "displayName": "sRV",
+  "publisher": "Khang-Nd",
+  "description": "AI Code Review - From SITV",
+  "icon": "media/logo_ai.png",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "AI Review Settings",
+      "properties": {
+        "srv.aiReview.azureUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Azure AI endpoint URL"
+        },
+        "srv.aiReview.azureKey": {
+          "type": "string",
+          "default": "",
+          "description": "Azure AI API key",
+          "password": true
+        },
+        "srv.aiReview.deploymentName": {
+          "type": "string",
+          "default": "gpt-5.1-chat",
+          "description": "Azure AI model deployment name"
+        }
+      }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "srv.reviewCode",
+          "when": "editorIsOpen",
+          "group": "navigation@100"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "srv.openSettings",
+          "when": "view == srvPanel",
+          "group": "navigation@100"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "srv.deleteComment",
+          "when": "viewItem == srvComment",
+          "group": "navigation@100"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "srvSidebar",
+          "title": "AI Review",
+          "icon": "media/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "srvSidebar": [
+        {
+          "id": "srvPanel",
+          "name": "AI Code Review",
+          "icon": "media/logo.svg"
+        },
+        {
+          "id": "srvComments",
+          "name": "AI Review Comments",
+          "icon": "media/logo.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "srv.reviewCode",
+        "title": "AI: Review Code Diff"
+      },
+      {
+        "command": "srv.openSettings",
+        "title": "Open Settings",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "srv.deleteComment",
+        "title": "Delete Comment"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.56.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
