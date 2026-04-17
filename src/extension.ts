@@ -73,9 +73,7 @@ async function resolveGitRootFromPath(
   return path.normalize(result.stdout.trim());
 }
 
-type ChangedFileEntry =
-  | { kind: "loading" }
-  | FileChangedEntry;
+type ChangedFileEntry = { kind: "loading" } | FileChangedEntry;
 
 type FileChangedEntry = {
   kind: "file";
@@ -345,7 +343,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.registerCommand("srv.openSettings", async () => {
         await vscode.commands.executeCommand(
           "workbench.action.openSettings",
-          "@ext:Khang-Nd.srv",
+          "@ext:Khang-Nd.Dev-Review-Tool",
         );
       }),
     );

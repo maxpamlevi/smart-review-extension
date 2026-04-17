@@ -8,11 +8,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/maxpamlevi/smart-review-extension.git"
+    "url": "https://github.com/maxpamlevi/dev-review-tool.git"
   },
-  "homepage": "https://github.com/maxpamlevi/smart-review-extension",
+  "homepage": "https://github.com/maxpamlevi/dev-review-tool",
   "bugs": {
-    "url": "https://github.com/maxpamlevi/smart-review-extension/issues"
+    "url": "https://github.com/maxpamlevi/dev-review-tool/issues"
   },
   "keywords": [
     "ai",
