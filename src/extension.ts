@@ -17,7 +17,8 @@ Schema:
 Rules:
 - Return only JSON, no markdown or code fences.
 - If no issue is found, return exactly {"comments":[]}.
-- "before" must be a real snippet from the post-diff file and uniquely identify the replacement.
+- "before" must be a COMPLETE verbatim copy of the lines from the file, including ALL trailing characters such as commas, semicolons, brackets, colons, quotes, and whitespace. Never truncate a line — copy it exactly as it appears.
+- For YAML, JSON, or TOML files, "before" MUST include every character on each line including trailing commas or colons. A mismatch of even one character will cause the apply to fail.
 - Keep fixes atomic and compile-safe; include all affected usages in "before".
 - The extension ignores range, but keep it present for schema compatibility.
 
@@ -626,6 +627,11 @@ export function activate(context: vscode.ExtensionContext) {
         // Read file WITHOUT opening editor → prevents diff view from closing
         const doc = await vscode.workspace.openTextDocument(uri);
         const { before, after, operation } = comment.fix;
+
+        // Detect data/config file types where brace-depth expansion is meaningless
+        // and where strict character-level matching is required (no prefix tolerance).
+        const fileExt = path.extname(uri.fsPath).toLowerCase();
+        const isConfigFile = [".yaml", ".yml", ".json", ".toml", ".ini", ".env"].includes(fileExt);
         const fullText = doc.getText();
 
         // ── Normalize line endings ──────────────────────────────────────────
@@ -656,6 +662,11 @@ export function activate(context: vscode.ExtensionContext) {
           startIdx: number,
           endIdx: number,
         ): number => {
+          // For config/data files (YAML, JSON, TOML…), brace-depth expansion is
+          // inappropriate: these files don't use ({[ as statement delimiters the
+          // same way code does, and expanding would corrupt structure.
+          if (isConfigFile) return endIdx;
+
           // Count unmatched opening delimiters inside the already-matched portion
           let depth = 0;
           for (let i = startIdx; i < endIdx; i++) {
@@ -726,25 +737,31 @@ export function activate(context: vscode.ExtensionContext) {
           // -- Pass 2: fuzzy sliding window (ignores leading/trailing whitespace) --
           const windowSize = beforeLines.length;
 
-          // Helper: check if a file line "contains" the before line as prefix
-          // (handles case where AI gave only the start of a longer line)
+          // Helper: check if a file line matches a before line.
+          // For code files: allow prefix match on the LAST before-line only
+          //   (handles AI giving only the start of a longer line).
+          // For config files (YAML/JSON/TOML): require EXACT match to prevent
+          //   a line like `key: value,` from being silently matched by
+          //   `before = "key: value"` (missing trailing comma), which would
+          //   replace the full line and lose the comma.
           const lineMatches = (
             fileLine: string,
             beforeLine: string,
+            isLastLine: boolean,
           ): boolean => {
             const f = normLine(fileLine);
             const b = normLine(beforeLine);
-            return f === b || f.startsWith(b);
+            if (f === b) return true;
+            // Prefix match only for code files on the last before-line
+            if (!isConfigFile && isLastLine && f.startsWith(b)) return true;
+            return false;
           };
 
           for (let i = 0; i <= fileLines.length - windowSize; i++) {
             const windowLines = fileLines.slice(i, i + windowSize);
             const matches = windowLines.every((wl, j) => {
-              if (j === windowSize - 1) {
-                // Last before-line can be a prefix of the file line
-                return lineMatches(wl, beforeLines[j]);
-              }
-              return normLine(wl) === normLine(beforeLines[j]);
+              const isLastLine = j === windowSize - 1;
+              return lineMatches(wl, beforeLines[j], isLastLine);
             });
 
             if (matches) {
